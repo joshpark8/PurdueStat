@@ -6,7 +6,7 @@ __pycache__/
 
 # Stuff to ignore
 .idea/
-test.py
+park-testing/
 
 # C extensions
 *.so

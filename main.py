@@ -84,4 +84,4 @@ if __name__ == '__main__':
                  'MoreScrims/testscrim2/Log-2022-04-11-21-24-25.txt',
                  'MoreScrims/testscrim2/Log-2022-04-11-21-45-31.txt']
     '''
-    sys.exit(main(outputfile=sys.argv[1:2], filepath=sys.argv[2:]))
+    sys.exit(main(outputfile=sys.argv[1:2], scrimid=sys.argv[2:]))

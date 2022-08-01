@@ -6,130 +6,88 @@ info file.
 Defines utility function CSVToArray for converting an input CSV to a python 3 dimensional list
 '''
 
-import re
-import csv
 import os
+import pymongo
 
 path = os.path.dirname(__file__)
 
-# This function takes in a logfile filename and creates 3 temp files that can be found in the testingTempfiles folder
-# takes an input of a filepath and has no outputs
-
-"""NOT COMPLETED"""
-"""needs tested for not KOTH maps"""
-def readLogfile(filename):
-
-    # opens each file in the mode needed
-    logfile = open(filename, 'r')
-    csvfile = open(f"{path}\\testingTempfiles/tempCSV.txt", 'a')
-    eventfile = open(f"{path}\\testingTempfiles/tempEvents.txt", 'a')
-    mapInfofile = open(f"{path}\\testingTempfiles/tempMapInfo.txt", 'w')
-
-    # removes the previous contents of these files since they are opened in append
-    csvfile.truncate(0)
-    eventfile.truncate(0)
-
-    # if a word in this list is in the line it will move that line to the tempevents file
-    listOfEventTriggers = ["FinalBlow", "Resurrected", "DuplicatingStart", "DuplicatingEnd"]
-    listOfMapInfoTriggers = ["False", "True"]
-    # splits the first 2 lines that contain the map info into thier own file
-    for i in range(0,2):
-        mapLines = logfile.readline()
-        mapInfofile.write(str(mapLines))
-
-    # splits the events from the rest of the info so that a csv format file is left
-    for line in logfile:
-        if any(trigger in line for trigger in listOfEventTriggers):
-            eventfile.write(line)
-        if any(trigger in line for trigger in listOfMapInfoTriggers) | (
-                re.match("\[\d+:\d+:\d+] [0-9]+\.[0-9]+,(([0-9]+\.[0-9]+)|\d+),(([0-9]+\.[0-9]+)|\d+)\n", line) is not None):
-            mapInfofile.write(line)
-        else:
-            csvfile.write(line)
-
-    logfile.close()
-    csvfile.close()
-    eventfile.close()
-    mapInfofile.close()
-    pass
+address = os.getenv('PURDUESTAT_MONGO_ADDRESS')
+client = pymongo.MongoClient(address)
+db = client["game_server"]
+collection = db["games"]
+game = collection.find_one({"_id": "dbecea12163e"}) # take in id
 
 
-    ''' 
-    convert the input CSV file to a list that holds each row of a matrix
-    array is a list of lists where each entry in array is a line of the input file and that line is broken into a list 
-    using comas as separators
-    array[0][0] is the first line of the input file and the first separated string
-    array[0][1] is the first line and the second separated string, and so on
-    '''
-def CSVToArray(filename) -> list:
-    with open(filename) as CSVfile:
-        file_read = csv.reader(CSVfile)
-        array = list(file_read)
-    return array
+'''Constants'''
+TANKS = ["Reinhardt", "Winston", "Orisa", "Wrecking Ball", "Roadhog", "Zarya", "Sigma", "D.Va"]
+DPS = ["Echo", "Pharah", "Doomfist", "Junkrat", "Mei", "Sombra", "Torbjorn", "Genji", "Hanzo", "Symmetra", "Reaper", "Soldier: 76", "Tracer", "Bastion", "Ashe", "Cassidy", "Widowmaker"]
+SUPPORTS = ["L\u00c3\u00bacio", "Brigitte", "Mercy", "Moira", "Zenyatta", "Baptiste", "Ana"]
 
 
-# start gen info functions
+'''Begin functions'''
 # completed
-def getMapName(filename) -> str:
-    map_array = CSVToArray(filename)
-    return map_array[0][0][11:]
+def getMapName(game) -> str:
+    return game['_map_name']
 
-
+# # # # # # # # # # # # # # # # # # # # # # # # Required?
 def getMapScore():
     return [0, 0]
 
-
 # completed
-def getMapType(filename) -> str:
-    map_name = getMapName(filename)
+def getMapType(game) -> str:
+    map_name = getMapName(game)
     if map_name in ["Busan", "Ilios", "Lijiang Tower", "Nepal", "Oasis"]:
         return "Control"
-    if map_name in ["Hanamura", "Horizon Lunar Colony", "Paris", "Temple of Anubis", "Volskaya Industries"]:
+    #2CP disappearing in ow2
+    elif map_name in ["Hanamura", "Horizon Lunar Colony", "Paris", "Temple of Anubis", "Volskaya Industries"]:
         return "Assault"
-    if map_name in ["Dorado", "Havana", "Junkertown", "Rialto", "Route 66", "Watchpoint Gibraltar"]:
+    elif map_name in ["Dorado", "Havana", "Junkertown", "Rialto", "Route 66", "Watchpoint Gibraltar"]:
         return "Escort"
-    if map_name in ["Blizzard World", "Eichenwalde", "Hollywood", "King's Row", "Numbani"]:
+    elif map_name in ["Blizzard World", "Eichenwalde", "Hollywood", "King's Row", "Numbani"]:
         return "Hybrid"
     else:
         print("NAN")
 
-
 # completed
-def getTeam(player_name) -> str:
-    map_info = CSVToArray("testingTempfiles/tempMapInfo.txt")
-    # team1 = map_info[0][1]
-    # team2 = map_info[0][2]
-    teamlist = map_info[1][:]
-    teamlist[0] = teamlist[0][11:]
-
-    if player_name in teamlist[0:6]:
-        return "team1"
-    elif player_name in teamlist[6:12]:
-        return "team2"
-    else:
-        return "notFound"
-
+def getTeam(name) -> str:
+    for i in range(6):
+        if name is game['_team_one']['_players'][i]['_name']:
+            return 'team1'
+    return 'team2'
 
 # completed
 def defineRole(heroes) -> str:
-    if heroes in ["Reinhardt", "Orisa", "Winston","D.Va", "Roadhog", "Sigma", "Wrecking Ball", "Zarya"]:
+    if heroes in TANKS:
         return "Tank"
-    if heroes in ["Ashe", "Bastion", "Cassidy", "Reaper", "Soldier: 76", "Sombra", "Tracer", "Widowmaker","Doomfist", "Echo", "Genji", "Hanzo", "Junkrat", "Mei", "Pharah", "Symmetra", "Torbjorn"]:
+    if heroes in DPS:
         return "Dps"
-    if heroes in ["L\u00c3\u00bacio", "Zenyatta", "Mercy", "Brigitte","Ana", "Baptiste", "Moira"]:
+    if heroes in SUPPORTS:
         return "Support"
 
-
 # completed
+def get_heroes_played(name, game):
+    team = '_team_two'
+    for i in range(6):
+        if name == game['_team_one']['_players'][i]['_name']:
+            team = '_team_one'
+            number = i
+            break
+
+    game_length = len(game['_time_stamps'])
+    heroes = set()
+    for i in range(game_length):
+        hero = game[team]['_players'][number]['_heroes'][i]
+        heroes.add(hero)
+    return heroes
+
+
 def assignRoles(players, heroes):
-    tanklist = ["Reinhardt", "Winston", "Orisa", "Wrecking Ball", "Roadhog", "Zarya", "Sigma", "D.Va"]
-    dpslist = ["Echo", "Pharah", "Doomfist", "Junkrat", "Mei", "Sombra", "Torbjorn", "Genji", "Hanzo", "Symmetra", "Reaper", "Soldier: 76", "Tracer", "Bastion", "Ashe", "Cassidy", "Widowmaker"]
-    suplist = ["L\u00c3\u00bacio", "Brigitte", "Mercy", "Moira", "Zenyatta", "Baptiste", "Ana"]
+    
     hero1 = heroes[0]
     hero2 = heroes[1]
     output = []
     if defineRole(heroes[0]) == "Tank":
-        for hero in tanklist:
+        for hero in TANKS:
             if hero1 == hero:
                 output.append(players[0])
                 output.append(players[1])
@@ -139,7 +97,7 @@ def assignRoles(players, heroes):
                 output.append(players[0])
                 break
     elif defineRole(heroes[0]) == "Dps":
-        for hero in dpslist:
+        for hero in DPS:
             if hero1 == hero:
                 output.append(players[0])
                 output.append(players[1])
@@ -149,7 +107,7 @@ def assignRoles(players, heroes):
                 output.append(players[0])
                 break
     elif defineRole(heroes[0]) == "Support":
-        for hero in suplist:
+        for hero in SUPPORTS:
             if hero1 == hero:
                 output.append(players[0])
                 output.append(players[1])
@@ -161,7 +119,6 @@ def assignRoles(players, heroes):
     return output
 
 
-# completed
 def makePlayerDict(array):
     names = []
     heroes = []
@@ -215,7 +172,7 @@ def makePlayerDict(array):
     return ordered_names
 
 
-# completed
+
 """
 Iterate through players from array, when the player names match up return the role they played
 """
@@ -254,7 +211,6 @@ def getUltTimings(player_name, array) -> list:
         [[125, 160], [234, 277], [390, -1]]
     ]
 
-# PARK DO THIS U DUMB FUCK
 def getTimeToUlt():
     return 88.375
 
@@ -263,36 +219,8 @@ def getTimeUltHeld():
     return 19.857
 
 
-def getHeroesPlayed(name, array)->dict:
-    time = 0
-    hero = 'NA'
-    heroes_played = {}
-    herolist = []
-    herotimes = []
-    for line in array:
-
-        if line[1:3][0] == name:
-            temp = hero
-            hero = line[1:3][1]
-            prevhero = temp
-
-            if (hero != prevhero) & (prevhero != 'NA'):
-                herolist.append(prevhero)
-                herotimes.append(time)
-                time = 0
-            time += 1
-    herolist.append(hero)
-    herotimes.append(time)
-    heroes_played["heroes"] = herolist
-    for i in range(len(herolist)):
-        heroes_played[herolist[i]] = herotimes[i]
-
-    return heroes_played
-
-
 # start final stat functions
 
-# completed
 def getFinalEntries(array) -> list:
     length = len(array)
     final_entries = []
@@ -311,97 +239,97 @@ def getFinalInfo(input_name, array, statnum) -> float:
     return None
 
 
-# completed
+
 def getAllDamageDealt(input_name, array) -> float:
     return float(getBarrierDamage(input_name, array)) + float(getHeroDamageDealt(input_name, array))
 
 
-# completed
+
 def getBarrierDamage(input_name, array) -> float:
     return getFinalInfo(input_name, array, 5)
 
 
-# completed
+
 def getCooldown1(input_name, array) -> float:
     return getFinalInfo(input_name, array, 25)
 
 
-# completed
+
 def getCooldown2(input_name, array) -> float:
     return getFinalInfo(input_name, array, 26)
 
 
-# completed
+
 def getDamageBlocked(input_name, array) -> float:
     return getFinalInfo(input_name, array, 6)
 
 
-# completed
+
 def getDamageTaken(input_name, array) -> float:
     return getFinalInfo(input_name, array, 7)
 
 
-# completed
+
 def getDeaths(input_name, array) -> float:
     return getFinalInfo(input_name, array, 8)
 
 
-# completed
+
 def getEliminations(input_name, array) -> float:
     return getFinalInfo(input_name, array, 9)
 
 
-# completed
+
 def getEnviroDeaths(input_name, array) -> float:
     return getFinalInfo(input_name, array, 11)
 
 
-# completed
+
 def getEnviroKills(input_name, array) -> float:
     return getFinalInfo(input_name, array, 12)
 
 
-# completed
+
 def getFinalBlows(input_name, array) -> float:
     return getFinalInfo(input_name, array, 10)
 
 
-# completed
+
 def getHealingDealt(input_name, array) -> float:
     return getFinalInfo(input_name, array, 13)
 
 
-# completed
+
 def getHealingReceived(input_name, array) -> float:
     return getFinalInfo(input_name, array, 18)
 
 
-# completed
+
 def getHeroDamageDealt(input_name, array) -> float:
     return getFinalInfo(input_name, array, 4)
 
 
-# completed
+
 def getObjectiveKills(input_name, array) -> float:
     return getFinalInfo(input_name, array, 14)
 
 
-# completed
+
 def getSoloKills(input_name, array) -> float:
     return getFinalInfo(input_name, array, 15)
 
 
-# completed
+
 def getUltimateCharge(input_name, array) -> float:
     return getFinalInfo(input_name, array, 19)
 
 
-# completed
+
 def getUltimatesEarned(input_name, array) -> float:
     return getFinalInfo(input_name, array, 16)
 
 
-# completed
+
 def getUltimatesUsed(input_name, array) -> float:
     return getFinalInfo(input_name, array, 17)
 
