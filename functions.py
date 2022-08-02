@@ -3,7 +3,6 @@ Defines getter functions and organizes them into dictionaries to be imported int
 
 Defines utility function readLogFile for reading in an Overwatch log file and seperating it into an event file, a CSV file, and an
 info file.
-Defines utility function CSVToArray for converting an input CSV to a python 3 dimensional list
 '''
 
 import os
@@ -82,7 +81,6 @@ def get_heroes_played(name, game):
 
 
 def assignRoles(players, heroes):
-    
     hero1 = heroes[0]
     hero2 = heroes[1]
     output = []
