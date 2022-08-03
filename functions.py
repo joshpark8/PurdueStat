@@ -7,6 +7,7 @@ info file.
 
 import os
 import pymongo
+from map import Map
 
 path = os.path.dirname(__file__)
 
@@ -22,19 +23,19 @@ TANKS = ["Reinhardt", "Winston", "Orisa", "Wrecking Ball", "Roadhog", "Zarya", "
 DPS = ["Echo", "Pharah", "Doomfist", "Junkrat", "Mei", "Sombra", "Torbjorn", "Genji", "Hanzo", "Symmetra", "Reaper", "Soldier: 76", "Tracer", "Bastion", "Ashe", "Cassidy", "Widowmaker"]
 SUPPORTS = ["L\u00c3\u00bacio", "Brigitte", "Mercy", "Moira", "Zenyatta", "Baptiste", "Ana"]
 
-
-'''Begin functions'''
+'''Begin basic functions'''
 # completed
-def getMapName(game) -> str:
+def get_map_name(game) -> str:
     return game['_map_name']
 
-# # # # # # # # # # # # # # # # # # # # # # # # Required?
+''' Required?
 def getMapScore():
     return [0, 0]
+'''
 
 # completed
-def getMapType(game) -> str:
-    map_name = getMapName(game)
+def get_map_type(game) -> str:
+    map_name = get_map_name(game)
     if map_name in ["Busan", "Ilios", "Lijiang Tower", "Nepal", "Oasis"]:
         return "Control"
     #2CP disappearing in ow2
@@ -45,17 +46,17 @@ def getMapType(game) -> str:
     elif map_name in ["Blizzard World", "Eichenwalde", "Hollywood", "King's Row", "Numbani"]:
         return "Hybrid"
     else:
-        print("NAN")
+        print("ERR")
 
 # completed
-def getTeam(name) -> str:
+def get_team(name) -> str:
     for i in range(6):
         if name is game['_team_one']['_players'][i]['_name']:
             return 'team1'
     return 'team2'
 
 # completed
-def defineRole(heroes) -> str:
+def define_role(heroes) -> str:
     if heroes in TANKS:
         return "Tank"
     if heroes in DPS:
@@ -79,12 +80,14 @@ def get_heroes_played(name, game):
         heroes.add(hero)
     return heroes
 
+'''Create Map object'''
+map = Map(get_map_type(game), get_map_name(game))
 
 def assignRoles(players, heroes):
     hero1 = heroes[0]
     hero2 = heroes[1]
     output = []
-    if defineRole(heroes[0]) == "Tank":
+    if define_role(heroes[0]) == "Tank":
         for hero in TANKS:
             if hero1 == hero:
                 output.append(players[0])
@@ -94,7 +97,7 @@ def assignRoles(players, heroes):
                 output.append(players[1])
                 output.append(players[0])
                 break
-    elif defineRole(heroes[0]) == "Dps":
+    elif define_role(heroes[0]) == "Dps":
         for hero in DPS:
             if hero1 == hero:
                 output.append(players[0])
@@ -104,7 +107,7 @@ def assignRoles(players, heroes):
                 output.append(players[1])
                 output.append(players[0])
                 break
-    elif defineRole(heroes[0]) == "Support":
+    elif define_role(heroes[0]) == "Support":
         for hero in SUPPORTS:
             if hero1 == hero:
                 output.append(players[0])
@@ -130,7 +133,7 @@ def makePlayerDict(array):
         names.append(info[0])
         heroes.append(info[1])
     for i in range(0, 12):
-        team = getTeam(names[i])
+        team = get_team(names[i])
         if team == "team1":
             team1players.append(names[i])
             team1heroes.append(heroes[i])
@@ -147,13 +150,13 @@ def makePlayerDict(array):
         supportplayers = []
         supportheroes = []
         for i in range(0,6):
-            if defineRole(heroes[i]) == "Tank":
+            if define_role(heroes[i]) == "Tank":
                 tankplayers.append(team[i])
                 tankheroes.append(heroes[i])
-            elif defineRole(heroes[i]) == "Dps":
+            elif define_role(heroes[i]) == "Dps":
                 dpsplayers.append(team[i])
                 dpsheroes.append(heroes[i])
-            elif defineRole(heroes[i]) == "Support":
+            elif define_role(heroes[i]) == "Support":
                 supportplayers.append(team[i])
                 supportheroes.append(heroes[i])
             else:
@@ -195,7 +198,7 @@ def getRole(player_name, array) -> str:
 
     for j in range(0, 12):
         if array[j][1] == player_name:
-            return defineRole(array[j][2])
+            return define_role(array[j][2])
     return 'Error'
 
 
